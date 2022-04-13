@@ -2,56 +2,51 @@
 
 	// Allow the config
 	define('__CONFIG__', true);
+
 	// Require the config
-	require_once "inc/config.php"; 
+	require_once "../inc/config.php";
+
+	if($_SERVER['REQUEST_METHOD'] == 'POST') {
+		// Always retutn JSON format
+		header('Content-Type: application/json');
+
+		$return = [];
+
+		$email = Filter::String( $_POST['email']);
+		$password = $_POST['password'];
 
 
- 	Page::ForceDashboard();
+		$user_found = User::Find($email, true);
+
+		if($user_found) {
+			//User exists, try and sign them in
+			$user_id['user_id'] =  (int) $user_found['user_id'];
+			$hash = (string) $user_found['password'];
+
+			if(password_verify($password, $hash)) {
+				// User is signed in
+				$return['redirect'] =  'GitHub/PHP-Login_System/dashboard.php';
+
+				$_SESSION['user_id'] = $user_id;
+			} else {
+				// Invalid user email/password combo
+				$return['error'] = "Invalid user email/password";
+			}
+
+			$return['error'] == "You already have an account";
+			$return['is_logged_in'] = false;
+		} else {
+			// They need to create a new account
+			$return['error'] = "You do not have an account. <a href='/GitHub/PHP-Login_System/register.php'>Create one now?</a>";
+		}
+
+			
+
+		echo json_encode($return, JSON_PRETTY_PRINT); exit; 
+
+	} else {
+		// Die, Kill the script, redirect the user
+		exit('Invalid URL');
+	}
+
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="robots" content="follow">
-
-		<title>Login</title>
-
-		<base href="/" />
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.13.4/dist/css/uikit.min.css" />
-	</head>
-
-	<body>
-		<div class="uk-section uk-container">
-			<div class="uk-grid uk-child-width-1-3@s uk-child-width-1-1" uk-grid>
-				<form class="uk-form-stacked js-login">
-					<h2>Login</h2>
-
-    <div class="uk-margin">
-        <label class="uk-form-label" for="form-stacked-text">Email</label>
-        <div class="uk-form-controls">
-            <input class="uk-input" for="form-stacked-text" type="Email" required='required' placeholder="email@email.com">
-        </div>
-    </div>
-    <div class="uk-margin">
-        <label class="uk-form-label" for="form-stacked-text">Password</label>
-        <div class="uk-form-controls">
-            <input class="uk-input" for="form-stacked-text" type="Password" required='required' placeholder="Your Password">
-        </div>
-    </div>
-
-    <div class="uk-margin.uk-alert.uk-alert-danger js-error" style='display: none;'></div>
-
-    <div class="uk-margin">
-        <button class="uk-button.uk-button-default" type="submit">Login</button>
-    </div>
-   
- 				</form>
-
-		</div>
-	<?php require_once "inc/footer.php"; ?>
-
-	</body>
-</html>
